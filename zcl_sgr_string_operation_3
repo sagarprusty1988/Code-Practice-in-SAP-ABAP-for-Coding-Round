@@ -1,0 +1,108 @@
+CLASS zcl_sgr_string_operation_3 DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+    METHODS: substring_k_distinct_char,
+      get_unique_char_count IMPORTING iv_string              TYPE string
+                            RETURNING VALUE(rv_unique_count) TYPE i,
+      interleaving_string_check,
+      check_interleave IMPORTING VALUE(iv_string_a) TYPE string OPTIONAL
+                                 VALUE(iv_string_b) TYPE string OPTIONAL
+                                 iv_string_c        TYPE string
+                                 iv_low             TYPE i
+                       RETURNING VALUE(rv_check)    TYPE abap_boolean.
+ENDCLASS.
+
+
+
+CLASS ZCL_SGR_STRING_OPERATION_3 IMPLEMENTATION.
+
+
+  METHOD if_oo_adt_classrun~main.
+    substring_k_distinct_char( ).
+  ENDMETHOD.
+
+
+  METHOD substring_k_distinct_char.
+    DATA:lv_string TYPE string VALUE 'aabab',
+         lv_k      TYPE i VALUE '3'.
+    TYPES: BEGIN OF ty_string_list,
+             string       TYPE string,
+             no_of_unique TYPE i,
+           END OF ty_string_list.
+    DATA: lt_string_list TYPE SORTED TABLE OF ty_string_list WITH NON-UNIQUE KEY no_of_unique.
+    "Linear parsing
+    DO ( strlen( lv_string ) - lv_k + 1 ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      DATA(lv_string_temp) = CONV string( lv_string+lv_offset(lv_k) ).
+      INSERT VALUE #( string = lv_string_temp
+                      no_of_unique = get_unique_char_count( lv_string_temp ) )
+                      INTO TABLE lt_string_list.
+    ENDDO.
+
+  ENDMETHOD.
+
+
+  METHOD get_unique_char_count.
+    TYPES: BEGIN OF ty_unique_char,
+             character TYPE c LENGTH 1,
+           END OF TY_UNIQUE_Char.
+    DATA: lt_unique_char TYPE SORTED TABLE OF ty_unique_char WITH NON-UNIQUE KEY character.
+    DO ( strlen( iv_string ) ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      DATA(lv_char) = iv_string+lv_offset(1).
+      IF NOT line_exists( lt_unique_char[ character = lv_char ] ).
+        INSERT VALUE #( character = lv_char ) INTO TABLE lt_unique_char.
+        rv_unique_count = rv_unique_count + 1.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD interleaving_string_check.
+    DATA: lv_string_a TYPE string VALUE 'XXY',
+          lv_string_b TYPE string VALUE 'XXZ',
+          lv_string_c TYPE string VALUE 'XXXXYZ'.
+    IF strlen( lv_string_c ) NE ( strlen( lv_string_A ) + strlen( lv_string_b ) ).
+      RETURN.
+    ENDIF.
+    DATA(lv_flag) = check_interleave( iv_string_c = lv_string_c
+                                      iv_low      = 0
+                                      iv_string_a = lv_string_a
+                                      iv_string_b = lv_string_b ).
+  ENDMETHOD.
+
+
+  METHOD check_interleave.
+    DATA(lv_char) = iv_string_c+iv_low(1).
+    "Check the character of C with A string
+    IF iv_string_a IS NOT INITIAL AND ( iv_string_c+iv_low(1) EQ iv_string_a(1) ).
+      DATA(lv_LEngth) = strlen( iv_string_a ) - 1.
+      IF lv_length NE 0.
+        DATA(lv_string_a) = iv_string_a+1(lv_LEngth).
+        RETURN.
+      ENDIF.
+      rv_check = check_interleave(  iv_string_c = iv_string_c
+                                    iv_low      = iv_low + 1
+                                    iv_string_a = lv_string_a
+                                    iv_string_b = iv_string_b ).
+    ELSEIF iv_string_b IS NOT INITIAL AND ( iv_string_c+iv_low(1) EQ iv_string_b(1) ).
+      lv_LEngth = strlen( iv_string_b ) - 1.
+      IF lv_length NE 0.
+        DATA(lv_string_b) = iv_string_b+1(lv_LEngth).
+        RETURN.
+      ENDIF.
+      rv_check = check_interleave(  iv_string_c = iv_string_c
+                                    iv_low      = iv_low + 1
+                                    iv_string_a = iv_string_a
+                                    iv_string_b = lv_string_b ).
+    ELSE.
+      rv_check = abap_false.
+    ENDIF.
+    "Check the character of C with B string
+  ENDMETHOD.
+ENDCLASS.
