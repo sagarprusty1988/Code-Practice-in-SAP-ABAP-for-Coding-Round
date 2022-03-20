@@ -1,0 +1,73 @@
+@EndUserText.label : 'Customer Table'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zsgr_customer {
+  key client  : abap.clnt not null;
+  key cust_id : abap.char(10) not null;
+  cust_name   : abap.char(250);
+  city        : abap.char(250);
+  grade       : abap.int4;
+  salesman_id : abap.char(10);
+
+}
+
+
+@EndUserText.label : 'Employee Master data'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zsgr_employee {
+  key client      : abap.clnt not null;
+  key emp_id      : abap.char(10) not null;
+  emp_name        : abap.char(200);
+  emp_loc         : abap.char(15);
+  emp_email       : abap.char(20);
+  manager_id      : abap.char(10);
+  gender          : abap.char(10);
+  joining_date    : sydate;
+  created_by      : syuname;
+  created_on      : sydate;
+  last_changed_by : syuname;
+  last_changed_on : sydate;
+  department      : abap.char(100);
+  @Semantics.amount.currencyCode : 'zsgr_employee.currency'
+  salary          : abap.curr(10,2);
+  currency        : abap.cuky;
+  @Semantics.amount.currencyCode : 'zsgr_employee.currency'
+  increment_rate  : abap.curr(5,2);
+
+}
+
+
+@EndUserText.label : 'Manager Master Table'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zsgr_manager {
+  key client      : abap.clnt not null;
+  key manager_id  : abap.char(10) not null;
+  emp_id          : abap.char(10);
+  created_by      : syuname;
+  created_on      : sydate;
+  last_changed_by : syuname;
+  last_changed_at : sydate;
+
+}
+
+@EndUserText.label : 'Sales Man table'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zsgr_salesman {
+  key client      : abap.clnt not null;
+  key salesman_id : abap.char(10) not null;
+  name            : abap.char(250);
+  city            : abap.char(250);
+  commision       : abap.dec(2,2);
+
+}
