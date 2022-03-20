@@ -1,0 +1,394 @@
+CLASS zcl_sgr_string_operation_2 DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+    TYPES: BEGIN OF ty_char_count,
+             character TYPE c LENGTH 1,
+             count     TYPE i,
+             mod       TYPE i,
+           END OF ty_char_count,
+           tt_char_count TYPE SORTED TABLE OF ty_char_count WITH NON-UNIQUE KEY character.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+    METHODS: get_number_of_rotation_str,
+      rotate_left IMPORTING iv_string1            TYPE string
+                            iv_string2            TYPE string
+                  RETURNING VALUE(rv_rotate_left) TYPE i,
+      rotate_right IMPORTING iv_string1             TYPE string
+                             iv_string2             TYPE string
+                   RETURNING VALUE(rv_rotate_right) TYPE i,
+      largest_word_in_dictionary,
+      mintime_repeat_make_substring,
+      get_excel_sheet_coulumn,
+      min_insertion_get_palindrome,
+      get_no_insertion IMPORTING iv_string              TYPE string
+                                 iv_low                 TYPE i
+                                 iv_high                TYPE i
+                       RETURNING VALUE(rv_no_insertion) TYPE i,
+      next_highest_palindrome,
+      get_char_list IMPORTING iv_string            TYPE string
+                    RETURNING VALUE(rt_char_count) TYPE tt_char_count,
+      reverse IMPORTING iv_string                TYPE string
+              RETURNING VALUE(rv_reverse_string) TYPE string,
+      longestt_kstring,
+      trim_left CHANGING cv_string TYPE string.
+ENDCLASS.
+
+
+
+CLASS ZCL_SGR_STRING_OPERATION_2 IMPLEMENTATION.
+
+
+  METHOD if_oo_adt_classrun~main.
+    "get_number_of_rotation_str( ).
+    "largest_word_in_dictionary( ).
+    "mintime_repeat_make_substring( ).
+    "get_excel_sheet_coulumn( ).
+    "min_insertion_get_palindrome( ),
+    "next_highest_palindrome( ).
+    longestt_kstring( ).
+  ENDMETHOD.
+
+
+  METHOD get_number_of_rotation_str.
+    DATA: lv_string1 TYPE string VALUE 'amazon',
+          lv_string2 TYPE string VALUE 'azonam'.
+    DATA(lv_rotate_left) = rotate_left( iv_string1 = lv_string1
+                                        iv_string2 = lv_string2 ).
+    DATA(lv_rotate_right) = rotate_right( iv_string1 = lv_string1
+                                          iv_string2 = lv_string2 ).
+  ENDMETHOD.
+
+
+  METHOD rotate_left.
+    DATA(lv_string1) = iv_string1.
+    DATA(lv_length) = strlen( iv_string1 ) - 1.
+    "The highest number of rotation can't be more than string length
+    DO strlen( iv_string1 ) TIMES.
+      rv_rotate_left = rv_rotate_left + 1.
+      " Get 1st character to last
+      DATA(lv_1st_char) = lv_string1(1).
+      lv_string1 = |{ lv_string1+1(lv_length) && lv_1st_char }|.
+      IF lv_string1 EQ iv_string2.
+        EXIT.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD rotate_right.
+    DATA(lv_string1) = iv_string1.
+    DATA(lv_length) = strlen( iv_string1 ) - 1.
+    "The highest number of rotation can't be more than string length
+    DO strlen( iv_string1 ) TIMES.
+      rv_rotate_right = rv_rotate_right + 1.
+      " Get 1st character to last
+      DATA(lv_1st_char) = lv_string1+lv_length(1).
+      lv_string1 = |{ lv_1st_char && lv_string1(lv_length) }|.
+      IF lv_string1 EQ iv_string2.
+        EXIT.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD largest_word_in_dictionary.
+    TYPES:BEGIN OF ty_string_table,
+            string TYPE string,
+          END OF ty_string_table,
+          BEGIN OF ty_string_table_finding,
+            length TYPE i,
+            string TYPE string,
+          END OF ty_string_table_finding.
+    DATA lt_string_table_finding TYPE SORTED TABLE OF ty_string_table_finding
+    WITH NON-UNIQUE KEY length.
+
+    DATA lt_string_table TYPE STANDARD TABLE OF ty_string_table.
+    lt_string_table = VALUE #( ( string = 'ale' )
+                               ( string = 'apple' )
+                               ( string = 'monkey' )
+                               ( string = 'plea' ) ).
+    DATA lv_string TYPE string VALUE 'abpcplea'.
+    "Get the longest string possible from dictionary
+    LOOP AT lt_string_table ASSIGNING FIELD-SYMBOL(<ls_string_table>).
+      DATA(lv_string_temp) = lv_string.
+      DATA(lv_length) = strlen( <ls_string_table>-string ).
+      DO ( strlen( <ls_string_table>-string ) ) TIMES.
+        DATA(lv_offset) = sy-index - 1.
+        DATA(lv_character) = <ls_string_table>-string+lv_offset(1).
+        FIND FIRST OCCURRENCE OF lv_character IN lv_string_temp MATCH OFFSET DATA(lv_offset_remaining).
+        IF sy-subrc IS NOT INITIAL.
+          DATA(lv_flag_not_found) = abap_true.
+          EXIT.
+        ENDIF.
+        lv_offset_remaining = lv_offset_remaining + 1.
+        DATA(lv_length_remaining) = strlen( lv_string_temp ) - lv_offset_remaining.
+        lv_string_temp = lv_string_temp+lv_offset_remaining(lv_length_remaining).
+        CLEAR lv_offset_remaining.
+      ENDDO.
+      IF lv_flag_not_found NE abap_true.
+        INSERT VALUE #( length = strlen( <ls_string_table>-string )
+                        string = <ls_string_table>-string ) INTO TABLE lt_string_table_finding.
+      ENDIF.
+      CLEAR lv_flag_not_found.
+    ENDLOOP.
+    IF lt_string_table_finding IS NOT INITIAL.
+      DATA(lv_highest_length) = lt_string_table_finding[ lines( lt_string_table_finding ) ]-length.
+      DATA(lt_final_list) = FILTER #( lt_string_table_finding WHERE length = lv_highest_length ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD mintime_repeat_make_substring.
+    DATA: lv_string_1 TYPE string VALUE 'abcd',
+          lv_string_2 TYPE string VALUE 'cdabcdab',
+          lv_count    TYPE i VALUE 1.
+    DO.
+      IF strlen( lv_string_1 ) GT strlen( lv_string_2 ).
+        IF lv_string_1 CS lv_string_2.
+          EXIT.
+        ELSE.
+          lv_count = -1.
+        ENDIF.
+        EXIT.
+      ELSE.
+        IF strlen( lv_string_1 ) EQ strlen( lv_string_2 ).
+          IF lv_string_1 CS lv_string_2.
+            EXIT.
+          ENDIF.
+        ENDIF.
+        lv_count = lv_count + 1.
+        lv_string_1 = |{  lv_string_1 && lv_string_1 }|.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD get_excel_sheet_coulumn.
+    " we need to go with remainder function
+    TYPES: BEGIN OF TY_excel_sheet,
+             number    TYPE i,
+             character TYPE c LENGTH 1,
+           END OF ty_excel_sheet.
+    DATA: lv_number TYPE i VALUE 62,
+          lv_string TYPE string.
+
+    DATA: lt_excel_sheet TYPE SORTED TABLE OF ty_excel_sheet WITH UNIQUE KEY number.
+    lt_excel_sheet = VALUE #( ( number = 1 character = 'A' )
+                              ( number = 2 character = 'B' )
+                              ( number = 3 character = 'C' )
+                              ( number = 4 character = 'D' )
+                              ( number = 5 character = 'E' )
+                              ( number = 6 character = 'F' )
+                              ( number = 7 character = 'G' )
+                              ( number = 8 character = 'H' )
+                              ( number = 9 character = 'I' )
+                              ( number = 10 character = 'J' )
+                              ( number = 11 character = 'K' )
+                              ( number = 12 character = 'L' )
+                              ( number = 13 character = 'M' )
+                              ( number = 14 character = 'N' )
+                              ( number = 15 character = 'O' )
+                              ( number = 16 character = 'P' )
+                              ( number = 17 character = 'Q' )
+                              ( number = 18 character = 'R' )
+                              ( number = 19 character = 'S' )
+                              ( number = 20 character = 'T' )
+                              ( number = 21 character = 'U' )
+                              ( number = 22 character = 'V' )
+                              ( number = 23 character = 'W' )
+                              ( number = 24 character = 'X' )
+                              ( number = 25 character = 'Y' ) ).
+    "Reduce the number that much time till it is less than zero
+    WHILE lv_number GE 1.
+      DATA(lv_mod) = lv_number MOD 26.
+      IF lv_mod EQ 0.
+        "add Z
+        lv_string = |{ 'Z' && lv_string }|.
+        lv_number = ( lv_number / 26 ) - 1.
+      ELSE.
+        lv_string = |{ lt_excel_sheet[ number = lv_mod ]-character && lv_string }|.
+        lv_number = lv_number / 26.
+      ENDIF.
+    ENDWHILE.
+  ENDMETHOD.
+
+
+  METHOD min_insertion_get_palindrome.
+    DATA: lv_string_input TYPE string VALUE 'abcba'.
+    DATA(lv_no_insertion) = get_no_insertion( iv_string = lv_string_input
+                                        iv_low = 0
+                                        iv_high = ( strlen( lv_string_input ) - 1 ) ).
+  ENDMETHOD.
+
+
+  METHOD get_no_insertion.
+    IF iv_low GE iv_high.
+      rv_no_insertion = 0.
+      RETURN.
+    ENDIF.
+    IF iv_string+iv_low(1) EQ iv_string+iv_high(1).
+      rv_no_insertion = get_no_insertion( iv_string = iv_string
+                                          iv_low  = ( iv_low + 1 )
+                                          iv_high = ( iv_high - 1 ) ).
+    ELSE.
+      DATA(lv_left_substring) =  get_no_insertion( iv_string = iv_string
+                                          iv_low  = ( iv_low )
+                                          iv_high = ( iv_high - 1 ) ).
+
+      DATA(lv_right_substring) =  get_no_insertion( iv_string = iv_string
+                                          iv_low  = ( iv_low )
+                                          iv_high = ( iv_high - 1 ) ).
+      IF lv_right_substring LE lv_left_substring.
+        rv_no_insertion = lv_right_substring + 1.
+      ELSE.
+        rv_no_insertion = lv_left_substring + 1.
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD next_highest_palindrome.
+    DATA: lv_string TYPE string VALUE '438834'.
+    zcl_sgr_create_test_data=>string_pallindrom_check( EXPORTING
+                                                          iv_string = lv_string
+                                                       IMPORTING
+                                                          ev_flag_not_pallindrom = DATA(lv_flag_not_pallindrom) ).
+    IF lv_flag_not_pallindrom EQ abap_true.
+      DATA(lv_not_possible) = -1.
+    ENDIF.
+    "DATA(lt_character_list) = get_char_list( lv_string ).
+    " lt_character_list[ mod = 1 ]-count = lt_character_list[ mod = 1 ]-count - 1.
+    "Take 1st half and get the next possible number
+    IF (  strlen( lv_string ) MOD 2 EQ 1 ). " If odd palindrome
+      DATA(lv_half) = strlen( lv_string ) / 2 - 1.
+      DATA(lv_char_mid) = lv_string+lv_half(1).
+    ELSE.
+      lv_half = strlen( lv_string ) / 2. " If even palindrome
+    ENDIF.
+
+    DO lv_half TIMES.
+      IF sy-index = 1.
+        DATA(lv_string_half) = lv_string(lv_half).
+        DATA(lv_offset) = lv_half - 1.
+      ENDIF.
+      " Check the last character
+      DO lv_offset TIMES.
+        IF sy-index EQ 1.
+          DATA(lv_offset_compare) = lv_offset - 1.
+        ENDIF.
+        IF lv_string_half+lv_offset_compare(1) LT lv_string_half+lv_offset(1).
+          IF ( lv_offset - lv_offset_compare ) EQ 1.
+            IF lv_offset_compare NE 0.
+              DATA(lv_char_start) = lv_string_half(lv_offset_compare).
+            ENDIF.
+          ELSE.
+            DATA(lv_length) = lv_offset - lv_offset_compare - 1.
+            DATA(lv_offset_middle) = lv_offset_compare + 1.
+            DATA(lv_char_middle) = lv_string_half+lv_offset_middle(lv_length).
+          ENDIF.
+          IF ( lv_half - lv_offset ) NE 1.
+            DATA(lv_length_last) = lv_half - ( lv_offset + 1 ).
+            DATA(lv_offset_last) = lv_offset + 1.
+            DATA(lv_char_end) = lv_string_half+lv_offset_last(lv_length_last).
+          ENDIF.
+          DATA(lv_string_half_new) = |{ lv_char_start && lv_string_half+lv_offset(1)
+                              && lv_char_middle && lv_string_half+lv_offset_compare(1)
+                              && lv_char_end }|.
+          lv_string_half = lv_string_half_new.
+          DATA(lv_found) = abap_true.
+        ENDIF.
+      ENDDO.
+      IF lv_found EQ abap_true.
+        EXIT.
+      ELSE.
+        lv_offset = lv_offset - 1.
+      ENDIF.
+    ENDDO.
+    DATA(lv_string_reverse) = reverse( lv_string_half ).
+    lv_string = |{  lv_string_half  && lv_char_mid && lv_string_reverse }|.
+  ENDMETHOD.
+
+
+  METHOD get_char_list.
+    DO strlen( iv_string ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      DATA(lv_char) = iv_string+lv_offset(1).
+      IF NOT line_exists( rt_char_count[ character = lv_char ] ).
+        INSERT VALUE #( character  = lv_char
+                        count      = 1
+                        mod        = 1 ) INTO TABLE rt_char_count.
+      ELSE.
+        rt_char_count[ character = lv_char ]-count = rt_char_count[ character = lv_char ]-count + 1.
+        rt_char_count[ character = lv_char ]-mod = rt_char_count[ character = lv_char ]-count MOD 2.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD reverse.
+    DO strlen( iv_string ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      rv_reverse_string = |{ iv_string+lv_offset(1) && rv_reverse_string }|.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD longestt_kstring.
+    TYPES: BEGIN OF ty_k_string,
+             length TYPE i,
+             string TYPE string,
+           END OF ty_k_string.
+    DATA: lt_k_string     TYPE SORTED TABLE OF ty_k_string WITH NON-UNIQUE KEY length,
+          ls_k_string     TYPE ty_k_string,
+          lv_unique_count TYPE i.
+    DATA: lv_string TYPE string VALUE 'aabacbebebe',
+          lv_k      TYPE i VALUE 3.
+    " Linear method
+    DO strlen( lv_string ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      IF NOT ( ls_k_string-string CS lv_string+lv_offset(1) ).
+        lv_unique_count = lv_unique_count + 1.
+      ENDIF.
+      "   Adding the characters
+      IF lv_unique_count LE lv_k.
+        ls_k_string-string = |{ ls_k_string-string && lv_string+lv_offset(1) }|.
+      ELSE.
+        "   Delete the characters from left
+        ls_k_string-length = strlen( ls_k_string-string ).
+        INSERT ls_k_string INTO TABLE lt_k_string.
+        ls_k_string-string = |{ ls_k_string-string && lv_string+lv_offset(1) }|.
+        CLEAR ls_k_string-length.
+        "Trim down characters by checking from right to left
+        trim_left( CHANGING cv_string = ls_k_string-string ).
+        lv_unique_count = lv_unique_count - 1.
+      ENDIF.
+      IF sy-index EQ strlen( lv_string ).
+        ls_k_string-length = strlen( ls_k_string-string ).
+        INSERT ls_k_string INTO TABLE lt_k_string.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD trim_left.
+    DATA: lv_string_temp  TYPE string,
+          lv_k            TYPE i VALUE 3,
+          lv_unique_count TYPE i.
+    DO strlen( cv_string ) TIMES.
+      DATA(lv_offset) = strlen( cv_string ) - sy-index.
+      IF NOT ( lv_string_temp CS cv_string+lv_offset(1) ).
+        lv_unique_count = lv_unique_count + 1.
+        IF lv_unique_count GT lv_k.
+          EXIT.
+        ENDIF.
+      ENDIF.
+      lv_string_temp = |{ cv_string+lv_offset(1) && lv_string_temp }|.
+    ENDDO.
+    IF lv_string_temp IS NOT INITIAL.
+      cv_string = lv_string_temp.
+    ENDIF.
+  ENDMETHOD.
+ENDCLASS.
