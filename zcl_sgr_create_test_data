@@ -1,0 +1,422 @@
+CLASS zcl_sgr_create_test_data DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+    TYPES: ty_char3 TYPE c LENGTH 3.
+    TYPES: BEGIN OF ty_list_number,
+             number TYPE zsgr_employee-salary,
+           END OF ty_list_number,
+           tt_list_number TYPE STANDARD TABLE OF ty_list_number.
+    CLASS-METHODS: insert_data_to_employee_tab,
+      insert_data_to_customer_tab,
+      select_queries,
+      numeric_function,
+      sort_operation,
+      swap CHANGING !cv_num1 TYPE zsgr_employee-salary
+                    !cv_num2 TYPE zsgr_employee-salary,
+      quick_sort IMPORTING !iv_low_index   TYPE i
+                           !iv_high        TYPE i
+                 CHANGING  !ct_list_number TYPE tt_list_number,
+      partition IMPORTING !iv_low_index   TYPE i
+                          !iv_high        TYPE i
+                EXPORTING !rv_pivot       TYPE i
+                CHANGING  !ct_list_number TYPE tt_list_number,
+      merge_sort IMPORTING !iv_low_index   TYPE i
+                           !iv_high        TYPE i
+                 CHANGING  !ct_list_number TYPE tt_list_number,
+      insertion_sort CHANGING !ct_list_number TYPE tt_list_number,
+      merge_array IMPORTING iv_low_index   TYPE i
+                            iv_middle      TYPE i
+                            iv_high        TYPE i
+                  CHANGING  ct_list_number TYPE tt_list_number,
+      string_operation,
+      reverse_string,
+      string_pallindrom_check IMPORTING !iv_string              TYPE string
+                              EXPORTING !ev_flag_not_pallindrom TYPE string,
+      longest_pallindrom_in_string,
+      get_lps_length IMPORTING !iv_position TYPE i
+                               !iv_string   TYPE string
+                     EXPORTING !ev_string   TYPE string,
+      string_with_separator CHANGING cv_string TYPE string.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+
+CLASS ZCL_SGR_CREATE_TEST_DATA IMPLEMENTATION.
+
+
+  METHOD insert_data_to_employee_tab.
+    DATA: lt_employee TYPE STANDARD TABLE OF zsgr_employee,
+          lt_manager  TYPE STANDARD TABLE OF zsgr_manager.
+
+    lt_employee = VALUE #( ( client = sy-mandt emp_id = '000000001' emp_name = 'Sagar' emp_loc = 'India' emp_email = 'sagar1@xyz.com' gender = 'Male' joining_date = '20200101' created_by = sy-uname
+                             created_on = '20150101' salary = CONV #( 3000000 ) currency = 'INR' department = 'IT ' increment_rate = CONV #( '20.45' ) )
+                           ( client = sy-mandt emp_id = '000000002' emp_name = 'Shankar' emp_loc = 'India' emp_email = 'shankar1@xyz.com' gender = 'Male' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                             created_on = '20140101' salary = CONV #( 1500000 ) currency = 'INR' department = 'HR' increment_rate = 18 )
+                           ( client = sy-mandt emp_id = '000000003' emp_name = 'Ipshita' emp_loc = 'India' emp_email = 'Ipshita1@xyz.com' gender = 'Female' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                              created_on = '20160101' salary = CONV #( 1300000 ) currency = 'INR' department = 'HR' increment_rate = CONV #( '19.67' ) )
+                           ( client = sy-mandt emp_id = '000000004' emp_name = 'Radhika' emp_loc = 'India' emp_email = 'Radhika@xyz.com' gender = 'Female' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                              created_on = '20180101'  salary = CONV #( 1000000 ) currency = 'INR' department = 'HR' increment_rate = CONV #( '30.34' ) )
+                           ( client = sy-mandt emp_id = '000000005' emp_name = 'Rohit' emp_loc = 'India' emp_email = 'Rohit@xyz.com' gender = 'Male' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                              created_on = '20160701'  salary = CONV #( 300000 ) currency = 'INR' department = 'IT' increment_rate = CONV #( '10.13' ) )
+                           (  client = sy-mandt emp_id = '000000006' emp_name = 'Madhulika' emp_loc = 'India' emp_email = 'Madhu@xyz.com' gender = 'Female' joining_date = '20200101' manager_id = '1000000001' created_by = sy-uname
+                              created_on = '20190201'  salary = CONV #( 1300000 ) currency = 'INR' department = 'HR' increment_rate = CONV #( '12.13' ) )
+                            (  client = sy-mandt emp_id = '000000007' emp_name = 'Madhu' emp_loc = 'India' emp_email = 'Madhul@xyz.com' gender = 'Female' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                              created_on = '20170101'  salary = CONV #( 1500000 ) currency = 'INR' department = 'HR' increment_rate = CONV #( '33.33' ) )
+                            (  client = sy-mandt emp_id = '000000008' emp_name = 'Max' emp_loc = 'India' emp_email = 'Madhul@xyz.com' gender = 'Female' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                              created_on = '20180901'  salary = CONV #( 1300000 ) currency = 'INR' department = 'IT' increment_rate = CONV #( '12.45' ) )
+                            (  client = sy-mandt emp_id = '000000009' emp_name = 'Manohar' emp_loc = 'India' emp_email = 'Madhul@xyz.com' gender = 'Female' joining_date = '20200101' manager_id = '1000000002' created_by = sy-uname
+                              created_on = '20170101'  salary = CONV #( 1300000 ) currency = 'INR' department = 'HR' increment_rate = CONV #( '13.46' ) )
+                         ).
+    MODIFY zsgr_employee FROM TABLE @lt_employee.
+    lt_manager = VALUE #( ( client = sy-mandt manager_id = '1000000001' emp_id = '000000001' created_on = '20150101' created_by = sy-uname )
+                          ( client = sy-mandt manager_id = '1000000002' emp_id = '000000007' created_on = '20180101' created_by = sy-uname ) ).
+    MODIFY zsgr_manager FROM TABLE @lt_manager.
+    COMMIT WORK AND WAIT.
+  ENDMETHOD.
+
+
+  METHOD select_queries.
+    "Selection by year
+    WITH +emp_year AS ( SELECT emp_id,
+    emp_name,
+    gender,
+    salary,
+    substring( created_on, 1, 4 ) AS year
+    FROM zsgr_employee ),
+    +year_wise_emplyee AS (
+    SELECT DISTINCT year,
+    gender,
+    CASE year WHEN '2015' THEN  COUNT( * ) OVER( PARTITION BY gender, year ) END AS year_2015,
+    CASE year WHEN '2016' THEN  COUNT( * ) OVER( PARTITION BY gender, year ) END AS year_2016,
+    CASE year WHEN '2017' THEN  COUNT( * ) OVER( PARTITION BY gender, year ) END AS year_2017,
+    CASE year WHEN '2018' THEN  COUNT( * ) OVER( PARTITION BY gender, year ) END AS year_2018,
+    CASE year WHEN '2019' THEN  COUNT( * ) OVER( PARTITION BY gender, year ) END AS year_2019
+    FROM +emp_year )
+    SELECT year,
+           gender
+    FROM +year_wise_emplyee
+    WHERE year_2015 NE 0
+    ORDER BY year,
+     gender
+    INTO TABLE @DATA(lt_employee).
+  ENDMETHOD.
+
+
+  METHOD numeric_function.
+    DATA: lv_num    TYPE p DECIMALS 2 VALUE '-35.67',
+          lv_result TYPE p DECIMALS 2.
+    lv_result = rescale( val = lv_num prec = 2 mode = 2 ).
+  ENDMETHOD.
+
+
+  METHOD swap.
+    DATA(lv_temp_for_swap) = cv_num1.
+    cv_num1 = cv_num2.
+    cv_num2 = lv_temp_for_swap.
+  ENDMETHOD.
+
+
+  METHOD string_operation.
+    DATA lv_string TYPE c LENGTH 250 VALUE 'In a republic day May people stay happy and joyful'.
+    DATA(lv_length) = strlen( lv_string ).
+    DO strlen( lv_string ) TIMES.
+      DATA(lv_string_temp) = lv_string.
+      REPLACE space WITH '%' INTO lv_string.
+      FIND ALL OCCURRENCES OF '%' IN lv_string RESULTS DATA(lt_space).
+      DATA(lv_offset) = lt_space[ lines( lt_space ) ]-offset.
+      IF lv_offset GE lv_length.
+        lv_string = lv_string_temp.
+        EXIT.
+      ENDIF.
+    ENDDO.
+
+    FIND ALL OCCURRENCES OF '%' IN lv_string RESULTS DATA(lt_positions).
+  ENDMETHOD.
+
+
+  METHOD partition.
+    DATA(lv_pivot_value) = ct_list_number[ iv_high ]-number.
+    DATA(lv_times) = iv_high - iv_low_index.
+    rv_pivot = iv_low_index - 1.
+    DO ( lv_times ) TIMES.
+      DATA(lv_low) = iv_low_index + sy-index - 1.
+      IF ct_list_number[ lv_low ]-number LT lv_pivot_value.
+        rv_pivot = rv_pivot + 1.
+        swap( CHANGING cv_num1 = ct_list_number[ rv_pivot ]-number
+                       cv_num2 = ct_list_number[ lv_low ]-number ).
+      ENDIF.
+    ENDDO.
+    rv_pivot = rv_pivot + 1.
+    swap( CHANGING cv_num1 = ct_list_number[ rv_pivot ]-number
+                   cv_num2 = ct_list_number[ iv_high ]-number ).
+  ENDMETHOD.
+
+
+  METHOD insertion_sort.
+    LOOP AT ct_list_number ASSIGNING FIELD-SYMBOL(<ls_list_number>).
+      DATA(lv_key) = <ls_list_number>-number.
+      DATA(lv_next_index) = sy-tabix - 1.
+      WHILE lv_next_index > 0 AND
+            ct_list_number[ lv_next_index ]-number GT lv_key.
+        ct_list_number[ lv_next_index + 1 ]-number = ct_list_number[ lv_next_index ]-number.
+        lv_next_index = lv_next_index - 1.
+      ENDWHILE.
+      ct_list_number[ lv_next_index + 1 ]-number = lv_key.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD merge_array.
+    DATA: lt_list_left  TYPE tt_list_number,
+          lt_list_right TYPE tt_list_number.
+    lt_list_left = VALUE #( FOR <ls_line> IN ct_list_number FROM iv_low_index TO iv_middle
+                          ( number = <ls_line>-number ) ).
+    "sort using insertion sort
+    lt_list_right = VALUE #( FOR <ls_line> IN ct_list_number FROM ( iv_middle + 1 ) TO iv_high
+                           ( number = <ls_line>-number ) ).
+    DATA(lv_index_left) = 1.
+    DATA(lv_index_right) = 1.
+    DATA(lv_main_list_index) = iv_low_index.
+    "Compare between two tables
+    WHILE ( lv_index_left LE lines( lt_list_left ) ) AND
+          ( lv_index_right LE lines( lt_list_right ) ).
+      "Get data from Left
+      IF lt_list_left[ lv_index_left ]-number LE lt_list_right[ lv_index_right ]-number.
+        ct_list_number[ lv_main_list_index  ]-number = lt_list_left[ lv_index_left ]-number.
+        lv_index_left = lv_index_left + 1.
+      ELSE.
+        "Get data from Right
+        ct_list_number[ lv_main_list_index  ]-number = lt_list_right[ lv_index_right ]-number.
+        lv_index_right = lv_index_right + 1.
+      ENDIF.
+      lv_main_list_index = lv_main_list_index + 1.
+    ENDWHILE.
+
+    "If something left in --> Left table
+    WHILE ( lv_index_left LE lines( lt_list_left ) ).
+      ct_list_number[ lv_main_list_index ]-number = lt_list_left[ lv_index_left ]-number.
+      lv_main_list_index = lv_main_list_index + 1.
+      lv_index_left = lv_index_left + 1.
+    ENDWHILE.
+
+    WHILE ( lv_index_right LE lines( lt_list_right ) ).
+      ct_list_number[ lv_main_list_index ]-number = lt_list_right[ lv_index_right ]-number.
+      lv_main_list_index = lv_main_list_index + 1.
+      lv_index_right  = lv_index_right + 1.
+    ENDWHILE.
+  ENDMETHOD.
+
+
+  METHOD reverse_string.
+    DATA lt_string_table TYPE string_table.
+    DATA(lv_string) = 'i.like.this.program.very.much'.
+    DATA lv_string_out TYPE string.
+    DATA(lv_start_offset) = 0.
+    FIND ALL OCCURRENCES OF '.' IN lv_string RESULTS DATA(lt_dot_offset).
+    LOOP AT lt_dot_offset ASSIGNING FIELD-SYMBOL(<ls_dot_offset>).
+      DATA(lv_length) = <ls_dot_offset>-offset - lv_start_offset .
+      IF sy-tabix = 1.
+        lv_string_out = lv_string+lv_start_offset(lv_length).
+      ELSE.
+        lv_string_out = |{ lv_string+lv_start_offset(lv_length) && '.' && lv_string_out }|.
+      ENDIF.
+      lv_start_offset = <ls_dot_offset>-offset + <ls_dot_offset>-length.
+      IF sy-tabix EQ lines( lt_dot_offset ).
+        lv_length = strlen( lv_string ) - lv_start_offset.
+        lv_string_out = |{ lv_string+lv_start_offset(lv_length) && '.' && lv_string_out }|.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+  METHOD longest_pallindrom_in_string.
+    DATA: lv_string TYPE string VALUE 'AABBCCBBDaDBBCC'.
+    TYPES: BEGIN OF ty_string_table,
+             length         TYPE i,
+             position       TYPE i,
+             string_display TYPE string,
+           END OF ty_string_table.
+    DATA(lv_length_STRING) = strlen( lv_string ).
+    string_with_separator( CHANGING cv_string = lv_string ).
+    DATA lt_string_table TYPE SORTED TABLE OF ty_string_table WITH NON-UNIQUE KEY length.
+    DO ( strlen( lv_string ) ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      CHECK sy-index NE 1.
+      DATA(lv_position) = sy-index.
+      get_lps_length( EXPORTING iv_position = lv_position
+                                iv_string   = lv_string
+                      IMPORTING ev_string = DATA(lv_palindrome_string) ).
+      IF lv_palindrome_string IS NOT INITIAL.
+        INSERT VALUE #( position       = lv_position
+                        length         = strlen( lv_palindrome_string )
+                        string_display = lv_palindrome_string ) INTO TABLE lt_string_table.
+        IF strlen( lv_palindrome_string ) EQ lv_length_string.
+          EXIT.
+        ENDIF.
+      ENDIF.
+    ENDDO.
+    DATA(longest_string) = lt_string_table[ lines( lt_string_table ) ]-string_display.
+
+  ENDMETHOD.
+
+
+  METHOD string_pallindrom_check.
+    DO ( strlen( iv_string ) / 2 ) TIMES.
+      DATA(lv_index) = sy-index.
+      DATA(lv_offset_left) = sy-index - 1.
+      DATA(lv_offset_right) = strlen( iv_string ) - sy-index.
+      IF iv_string+lv_offset_left(1) NE iv_string+lv_offset_right(1).
+        ev_flag_not_pallindrom = abap_true.
+        EXIT.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD get_lps_length.
+    CLEAR ev_string.
+    DATA: lv_left_offset  TYPE i,
+          lv_right_offset TYPE i.
+    DO iv_position TIMES.
+      "left comparision only
+      IF sy-index EQ 1.
+        DATA(lv_character_offset) = iv_position - 1.
+        IF iv_string+lv_character_offset(1) NE '|'.
+          ev_string = iv_string+lv_character_offset(1).
+        ENDIF.
+        lv_left_offset = iv_position - 2.
+        lv_right_offset  = iv_position.
+        IF lv_left_offset LT 0.
+          EXIT.
+        ENDIF.
+        IF lv_right_offset GE ( strlen( iv_string ) - 1 ).
+          EXIT.
+        ENDIF.
+      ENDIF.
+      IF iv_string+lv_left_offset(1) EQ iv_string+lv_right_offset(1).
+        IF iv_string+lv_left_offset(1) NE '|'.
+          ev_string = |{ iv_string+lv_left_offset(1) && ev_string && iv_string+lv_right_offset(1) }|.
+        ENDIF.
+      ELSE.
+        EXIT.
+      ENDIF.
+
+      lv_left_offset = lv_left_offset - 1.
+      lv_right_offset = lv_right_offset + 1.
+
+      "Check left limit reached.
+      IF lv_left_offset LT 0.
+        EXIT.
+      ENDIF.
+
+      IF lv_right_offset = ( strlen( iv_string ) - 1 ).
+        EXIT.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD string_with_separator.
+    DATA lv_string TYPE string.
+    DO ( strlen( cv_string ) ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      IF sy-index = 1.
+        lv_string = |{ '|' && cv_string+lv_offset(1) }|.
+        lv_string = |{ lv_string && '|' }|.
+        CONTINUE.
+      ENDIF.
+      lv_string = |{ lv_string && cv_string+lv_offset(1) && '|' }|.
+    ENDDO.
+    cv_string = lv_string.
+  ENDMETHOD.
+
+
+  METHOD insert_data_to_customer_tab.
+    DATA: lt_customer TYPE STANDARD TABLE OF zsgr_customer,
+          lt_salesman TYPE STANDARD TABLE OF zsgr_salesman.
+
+    lt_customer =  VALUE #( ( cust_id = '3002' cust_name = 'Nick Rimando' city = 'New York' grade = '100' salesman_id = '5001' )
+                            ( cust_id = '3007' cust_name = 'Brad Davis' city = 'New York' grade = '200' salesman_id = '5001' )
+                            ( cust_id = '3005' cust_name = 'Graham Zusi' city = 'California' grade = '200' salesman_id = '5002' )
+                            ( cust_id = '3008' cust_name = 'Julian Green' city = 'London' grade = '300' salesman_id = '5002' )
+                            ( cust_id = '3004' cust_name = 'Fabian Johnson' city = 'Paris' grade = '300' salesman_id = '5006' )
+                            ( cust_id = '3009' cust_name = 'Geoff Cameron' city = 'Berlin' grade = '100' salesman_id = '5003' )
+                            ( cust_id = '3003' cust_name = 'Jozy Altidor' city = 'Moscow' grade = '200' salesman_id = '5007' ) ).
+    lt_salesman = VALUE #( ( salesman_id = '5001' name = 'James Hoog' city = 'New York' commision = '0.15' )
+                           ( salesman_id = '5002' name = 'Nail Knite' city = 'Paris' commision = '0.13' )
+                           ( salesman_id = '5005' name = 'Pit Alex' city = 'London' commision = '0.11' )
+                           ( salesman_id = '5006' name = 'Mc Lyon' city = 'Paris' commision = '0.14' )
+                           ( salesman_id = '5007' name = 'Paul Adam' city = 'Rome' commision = '0.13' )
+                           ( salesman_id = '5003' name = 'Lauson Hen' city = 'San Jose' commision = '0.12' ) ).
+    MODIFY zsgr_customer FROM TABLE @lt_customer.
+    MODIFY zsgr_salesman FROM TABLE @lt_salesman.
+    COMMIT WORK AND WAIT.
+  ENDMETHOD.
+
+
+  METHOD if_oo_adt_classrun~main.
+    "insert_data_to_employee_tab( ).
+    "insert_data_to_customer_tab( ).
+    " select_queries( ).
+    "numeric_function( ).
+    sort_operation( ).
+    "string_operation( ).
+    "reverse_string( ).
+    "longest_pallindrom_in_string( ).
+  ENDMETHOD.
+
+
+  METHOD merge_sort.
+    IF iv_low_index LT iv_high.
+      DATA(lv_middle) = ( iv_low_index + ( iv_high ) - 1 ) / 2.
+
+      "Merge Sort for 1st half
+      merge_sort( EXPORTING iv_low_index = iv_low_index
+                            iv_high      = lv_middle
+                  CHANGING ct_list_number = ct_list_number ).
+      merge_sort( EXPORTING iv_low_index = lv_middle + 1
+                            iv_high      = iv_high
+                  CHANGING ct_list_number = ct_list_number ).
+      merge_array( EXPORTING iv_low_index = iv_low_index
+                             iv_middle    = lv_middle
+                             iv_high      = iv_high
+                   CHANGING  ct_list_number = ct_list_number ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD quick_sort.
+    DATA lv_pivot TYPE i.
+    IF iv_low_index < iv_high.
+      partition( EXPORTING iv_low_index  = iv_low_index
+                            iv_high      = iv_high
+                 IMPORTING  rv_pivot     = lv_pivot
+                 CHANGING  ct_list_number = ct_list_number ).
+      quick_sort( EXPORTING iv_low_index = iv_low_index
+                            iv_high      = lv_pivot - 1
+                  CHANGING  ct_list_number = ct_list_number ).
+      quick_sort( EXPORTING iv_low_index = lv_pivot + 1
+                            iv_high      = iv_high
+                  CHANGING  ct_list_number = ct_list_number ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD sort_operation.
+    DATA: lt_list_number TYPE tt_list_number.
+    lt_list_number = VALUE #( ( number = '10' )  ( number = '40' ) ( number = '05' ) ( number = '46' )
+                              ( number = '12' )  ( number = '11' ) ( number = '33' ) ( number = '23' ) ).
+    "  quick_sort( EXPORTING iv_low_index = 1
+    "                       iv_high = lines( lt_list_number )
+    "            CHANGING  ct_list_number = lt_list_number ).
+    "RETURN.
+    merge_sort( EXPORTING iv_low_index = 1
+                          iv_high      = lines( lt_list_number )
+                CHANGING ct_list_number = lt_list_number ).
+  ENDMETHOD.
+ENDCLASS.
