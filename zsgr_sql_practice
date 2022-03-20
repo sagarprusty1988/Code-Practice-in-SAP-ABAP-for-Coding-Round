@@ -1,0 +1,175 @@
+CLASS zsgr_sql_practice DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+    CLASS-METHODS: select_with_having,
+      select_sales_man_customer,
+      select_manager_male_female,
+      top_3_slaray_by_department,
+      Concat_sample,
+      get_manager_of_department,
+      get_total_salary_dept_avg.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+    METHODS:get_emp_list_more_than_avg,
+            get_mngr_list_emp_sal_grtr_avg.
+ENDCLASS.
+
+
+
+CLASS ZSGR_SQL_PRACTICE IMPLEMENTATION.
+
+
+  METHOD if_oo_adt_classrun~main.
+    "select_with_having( ).
+    "select_manager_male_female( ).
+    "select_sales_man_customer( ).
+    "top_3_slaray_by_department( ).
+    "concat_sample( ).
+    "get_manager_of_department( ).
+    "get_emp_list_more_than_avg( ).
+    "get_total_salary_dept_avg( ).
+    get_mngr_list_emp_sal_grtr_avg( ).
+  ENDMETHOD.
+
+
+  METHOD select_with_having.
+    "List of the
+  ENDMETHOD.
+
+
+  METHOD select_sales_man_customer.
+    SELECT DISTINCT customer~cust_name AS customer_name,
+                    sales~name AS salesman_name,
+                    customer~grade,
+                    customer~city AS customer_city,
+                    sales~city AS salesman_city
+                    FROM zsgr_customer AS customer INNER JOIN zsgr_salesman AS sales
+                    ON  customer~salesman_id = sales~salesman_id
+                    AND customer~city   <> sales~city
+                    WHERE customer~grade BETWEEN '100' AND '300'
+                    ORDER BY sales~city
+                    INTO TABLE @DATA(lt_customer).
+  ENDMETHOD.
+
+
+  METHOD select_manager_male_female.
+    WITH +manager_gender_count AS ( SELECT DISTINCT manager_id,
+                                            CASE gender WHEN 'Male' THEN
+                                            COUNT(*) OVER( PARTITION BY manager_id, gender ) END AS no_of_employee_male,
+                                            CASE gender WHEN 'Female' THEN
+                                            COUNT(*) OVER( PARTITION BY manager_id, gender ) END AS no_of_employee_female
+                                            FROM zsgr_employee
+                                            WHERE manager_id IS NOT INITIAL )
+"Manger and the counts on one row
+          SELECT DISTINCT zsgr_employee~emp_name AS name
+          FROM +manager_gender_count INNER JOIN zsgr_manager
+          ON   +manager_gender_count~manager_id = zsgr_manager~manager_id
+          INNER JOIN zsgr_employee
+          ON zsgr_employee~emp_id  = zsgr_manager~emp_id
+          GROUP BY +manager_gender_count~manager_id,
+                   zsgr_employee~emp_name
+          HAVING MAX( no_of_employee_male ) GE 1
+          AND    MAX( no_of_employee_female ) GE 1
+          INTO TABLE @DATA(lt_manager).
+  ENDMETHOD.
+
+
+  METHOD top_3_slaray_by_department.
+    WITH +salary_rank_list AS ( SELECT department,
+                                      emp_id,
+                                    salary,
+                                       DENSE_RANK( ) OVER( PARTITION BY department ORDER BY salary DESCENDING ) AS rank_salary
+                                    FROM zsgr_employee )
+
+    SELECT department,
+           emp_id,
+           salary
+           FROM +salary_rank_list
+           WHERE rank_salary LE 3
+           GROUP BY department,
+                    emp_id,
+                    salary
+            ORDER BY department ASCENDING,
+                     salary     DESCENDING
+           INTO TABLE @DATA(lt_department_emp_lst).
+
+  ENDMETHOD.
+
+
+  METHOD concat_sample.
+    SELECT emp_id,
+           joining_date
+           FROM zsgr_employee
+           WHERE ( substring( joining_date, 1, 4 ) = '2020' )
+           INTO TABLE @DATA(lt_emp_joining_date).
+  ENDMETHOD.
+
+
+  METHOD get_manager_of_department.
+    WITH +manager_emp_count AS ( SELECT DISTINCT manager_id,
+                                        CASE department WHEN 'IT' THEN
+                                        COUNT(*) OVER( PARTITION BY manager_id, department ) END AS no_of_employees_it,
+                                        CASE department WHEN 'HR' THEN
+                                        COUNT(*) OVER( PARTITION BY manager_id, department ) END AS no_of_employees_hr
+                                        FROM zsgr_employee )
+    SELECT DISTINCT manager_id
+           FROM +manager_emp_count
+           GROUP BY manager_id
+           HAVING MAX( no_of_employees_it ) GE 1
+           AND    MAX( no_of_employees_hr ) GE 1
+           INTO TABLE @DATA(lt_manager_id_list).
+  ENDMETHOD.
+
+
+  METHOD get_emp_list_more_than_avg.
+    WITH +avg_salary_employee AS ( SELECT avg( salary ) as avg_salary
+                                   FROM zsgr_employee ),
+         +avg_salary_emp_cast AS ( SELECT CAST( avg_salary as CURR ) as avg_salary
+                                          FROM +avg_salary_employee )
+    SELECT zsgr_employee~emp_id,
+           zsgr_employee~emp_name,
+           zsgr_employee~salary,
+           +avg_salary_emp_cast~avg_salary
+           FROM zsgr_employee INNER JOIN +avg_salary_emp_cast
+           ON   zsgr_employee~salary GT +avg_salary_emp_cast~avg_salary
+           INTO TABLE @DATA(lt_emp_avg_salary).
+  ENDMETHOD.
+
+
+  METHOD get_total_salary_dept_avg.
+    WITH +avg_salary_employee AS ( SELECT DISTINCT avg( salary ) as avg_salary
+                                   FROM zsgr_employee ),
+         +avg_salary_employee_cast AS ( SELECT cast( avg_salary as CURR ) as avg_salary
+                                        FROM +avg_salary_employee ),
+         +tot_salary_emplyee AS ( SELECT DISTINCT department ,
+                                                  SUM( salary ) as sum_by_dept
+                                                  FROM zsgr_employee
+                                                  GROUP BY department )
+    SELECT +tot_salary_emplyee~department,
+           +tot_salary_emplyee~sum_by_dept,
+           +avg_salary_employee_cast~avg_salary
+        FROM +tot_salary_emplyee INNER JOIN +avg_salary_employee_cast
+        ON   +tot_salary_emplyee~sum_by_dept GT +avg_salary_employee_cast~avg_salary
+        INTO TABLE @DATA(lt_avg_tot_salary).
+  ENDMETHOD.
+
+
+  METHOD get_mngr_list_emp_sal_grtr_avg.
+    WITH +avg_salary_employee AS ( SELECT DISTINCT avg( salary ) as avg_salary
+                                     FROM zsgr_employee ),
+    +avg_emp_avg_salry_by_man AS ( SELECT DISTINCT  manager_id,
+                                                    avg( salary ) as avg_salary_by_mananger
+                                   FROM zsgr_employee
+                                   GROUP BY manager_id )
+    SELECT +avg_emp_avg_salry_by_man~manager_id,
+           +avg_emp_avg_salry_by_man~avg_salary_by_mananger,
+           +avg_salary_employee~avg_salary
+           FROM +avg_emp_avg_salry_by_man INNER JOIN +avg_salary_employee
+           ON +avg_salary_employee~avg_salary GT +avg_emp_avg_salry_by_man~avg_salary_by_mananger
+           INTO TABLE @DATA(lt_manager_list).
+
+  ENDMETHOD.
+ENDCLASS.
