@@ -1,0 +1,317 @@
+# Code-Practice-in-SAP-ABAP-for-Coding-Round
+CLASS zcl_sgr_string_operation DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+    CLASS-METHODS: longest_common_prefix,
+      isomorpic_string,
+      k_anagram,
+      minimum_delete_for_palindrome,
+      longest_possible_string IMPORTING iv_string         TYPE string
+                                        iv_position_start TYPE i
+                                        iv_position_end   TYPE i
+                              RETURNING VALUE(rv_length)  TYPE i,
+      maximum IMPORTING iv_num1       TYPE i
+                        iv_num2       TYPE i
+              RETURNING VALUE(rv_num) TYPE i,
+      get_permutation_for_palindrome,
+      non_repeating_char_string IMPORTING iv_string                 TYPE string
+                                RETURNING VALUE(rv_long_non_repeat) TYPE string,
+      possible_string IMPORTING iv_string_input TYPE string
+                                iv_index        TYPE sy-index
+                                iv_left         TYPE abap_boolean
+                      CHANGING  cv_string       TYPE string,
+      string_operation.
+ENDCLASS.
+
+
+
+CLASS ZCL_SGR_STRING_OPERATION IMPLEMENTATION.
+
+
+  METHOD if_oo_adt_classrun~main.
+    string_operation( ).
+    "longest_common_prefix( ).
+    "isomorpic_string( ).
+    "k_anagram( ).
+    "minimum_delete_for_palindrome( ).
+    "get_permutation_for_palindrome( ).
+  ENDMETHOD.
+
+
+  METHOD longest_common_prefix.
+    DATA : lv_common_prefix TYPE string.
+    TYPES: BEGIN OF ty_string_table,
+             string TYPE string,
+           END OF ty_string_table.
+    DATA: lt_string_table TYPE STANDARD TABLE OF ty_string_table.
+    lt_string_table  = VALUE #( ( string = 'GeekCode' )
+                                ( string = 'GeekCoder')
+                                ( string = 'GeekCodergamer' )
+                                ( string = 'GeekCogamer' ) ).
+    LOOP AT lt_string_table ASSIGNING FIELD-SYMBOL(<ls_string>) FROM 2.
+      DATA(lv_previous_string) = lt_string_table[ sy-tabix - 1 ]-string.
+      DATA(lv_length_common_prefix) = strlen( lv_common_prefix ).
+      IF sy-tabix NE 2 AND lv_common_prefix IS INITIAL.
+        EXIT.
+      ENDIF.
+      IF <ls_string>-string(lv_length_common_prefix) EQ lv_common_prefix AND
+         sy-tabix NE 2.
+        CONTINUE.
+      ELSE.
+        CLEAR lv_common_prefix.
+      ENDIF.
+      IF strlen( <ls_string>-string ) LT strlen( lv_previous_string ).
+        DATA(lv_times) = strlen( <ls_string>-string ).
+      ELSE.
+        lv_times = strlen( lv_previous_string ).
+      ENDIF.
+      DO lv_times TIMES.
+        DATA(lv_offset) = sy-index - 1.
+        IF <ls_string>-string+lv_offset(1) EQ lv_previous_string+lv_offset(1).
+          lv_common_prefix = |{ lv_common_prefix && lv_previous_string+lv_offset(1) }|.
+        ELSE.
+          EXIT.
+        ENDIF.
+      ENDDO.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+
+  METHOD isomorpic_string.
+    DATA: lv_string_1 TYPE string VALUE 'paper',
+          lv_string_2 TYPE string VALUE 'title'.
+
+    TYPES:BEGIN OF ty_mapping_char,
+            char_string1 TYPE c LENGTH 1,
+            char_string2 TYPE c LENGTH 1,
+          END OF ty_mapping_char.
+    DATA: lt_mapping_char TYPE STANDARD TABLE OF ty_mapping_char.
+
+    IF strlen( lv_string_1 ) NE strlen( lv_string_2 ).
+      DATA(lv_not_isomorphic) = abap_true.
+      RETURN.
+    ENDIF.
+
+    DO ( strlen( lv_string_1 ) ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      IF NOT line_exists( lt_mapping_char[ char_string1 = lv_string_1+lv_offset(1) ] ).
+        APPEND VALUE #( char_string1 = lv_string_1+lv_offset(1)
+                        char_string2 = lv_string_2+lv_offset(1) ) TO lt_mapping_char.
+      ELSE.
+        IF lt_mapping_char[ char_string1 = lv_string_1+lv_offset(1) ]-char_string2 NE lv_string_2+lv_offset(1).
+          lv_not_isomorphic = abap_true.
+          EXIT.
+        ENDIF.
+      ENDIF.
+    ENDDO.
+
+  ENDMETHOD.
+
+
+  METHOD k_anagram.
+    DATA(k) = 3.
+    DATA: lv_string_1 TYPE string VALUE 'adaadaddcc',
+          lv_string_2 TYPE string VALUE 'ccddbbaaaa'.
+    TYPES: BEGIN OF ty_char_frequency,
+             character TYPE c LENGTH 1,
+             frequency TYPE i,
+           END OF ty_char_frequency.
+    DATA: lt_string_1 TYPE SORTED TABLE OF ty_char_frequency WITH NON-UNIQUE KEY character,
+          lt_string_2 TYPE SORTED TABLE OF ty_char_frequency WITH NON-UNIQUE KEY character.
+    DATA: lv_string_mismatch TYPE i.
+    DO strlen( lv_string_1 ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      "Check for string 1
+      DATA(lv_character) = lv_string_1+lv_offset(1).
+      IF NOT line_exists( lt_string_1[ character = lv_character ] ).
+        FIND ALL OCCURRENCES OF lv_character IN lv_string_1 MATCH COUNT DATA(lv_count_1).
+        FIND ALL OCCURRENCES OF lv_character IN lv_string_2 MATCH COUNT DATA(lv_count_2).
+        IF ( lv_count_1 - lv_count_2 ) > 0.
+          lv_string_mismatch = ( lv_count_1 - lv_count_2 ).
+        ENDIF.
+        INSERT VALUE #( character = lv_character frequency = lv_count_1 ) INTO TABLE lt_string_1.
+      ENDIF.
+    ENDDO.
+  ENDMETHOD.
+
+
+  METHOD maximum.
+    IF iv_num1 GT iv_num2.
+      rv_num = iv_num1.
+    ELSE.
+      rv_num = iv_num2.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD get_permutation_for_palindrome.
+    DATA: lv_string TYPE string VALUE 'BAAA'.
+    TYPES: BEGIN OF ty_chracter_frequency,
+             character TYPE c LENGTH 1,
+             times     TYPE i,
+           END OF ty_chracter_frequency.
+    DATA: lt_character_frequency TYPE STANDARD TABLE OF ty_chracter_frequency.
+
+    DATA(lv_string_temp) = lv_string.
+    DO ( strlen( lv_string ) ) TIMES.
+      DATA(lv_offset) = sy-index - 1.
+      IF NOT lv_string+lv_offset(1) CS lv_string_temp.
+        APPEND INITIAL LINE TO lt_character_frequency ASSIGNING FIELD-SYMBOL(<ls_character_frequency>).
+        <ls_character_frequency>-character = lv_string+lv_offset(1).
+        FIND ALL OCCURRENCES OF lv_string+lv_offset(1) IN lv_string MATCH COUNT <ls_character_frequency>-times.
+        <ls_character_frequency>-times = <ls_character_frequency>-times MOD 2."Even Number check
+        REPLACE ALL OCCURRENCES OF lv_string+lv_offset(1) IN lv_string_temp WITH space.
+        CONDENSE lv_string_temp.
+      ENDIF.
+      IF lv_string_temp IS INITIAL.
+        EXIT.
+      ENDIF.
+    ENDDO.
+
+    DELETE lt_character_frequency WHERE times = 0.
+    IF lines( lt_character_frequency ) GT 1. "2 Odd entries
+      DATA(lv_flag_no_palindrom_pos) = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD non_repeating_char_string.
+    TYPES: BEGIN OF ty_longest_string,
+             length TYPE i,
+             string TYPE string,
+           END OF ty_longest_string.
+    DATA lv_count TYPE i.
+    DATA lv_string TYPE string.
+    DATA: lt_longest_string TYPE SORTED TABLE OF ty_longest_string WITH NON-UNIQUE KEY length.
+    DO strlen( iv_string ) TIMES.
+      DATA(lv_index) = sy-index.
+      lv_count = lv_count + 1.
+      DATA(lv_offset) = sy-index - 1.
+      "APPEND INITIAL LINE TO lt_longest_string ASSIGNING FIELD-SYMBOL(<ls_longest_strin>).
+      "<ls_longest_strin>-iteration =  lv_count .
+      lv_string = iv_string+lv_offset(1).
+      IF lv_offset NE 0.
+        " Parse Left
+        possible_string( EXPORTING iv_string_input = iv_string
+                                   iv_index        = lv_index
+                                   iv_left         = abap_true
+                         CHANGING cv_string = lv_string ).
+      ENDIF.
+      " Parse Right
+      IF sy-index NE strlen( iv_string ).
+        possible_string( EXPORTING iv_string_input = iv_string
+                                         iv_index        = lv_index
+                                         iv_left         = abap_false
+                               CHANGING cv_string = lv_string ).
+      ENDIF.
+      DATA(lv_length) = strlen( lv_string ).
+      INSERT VALUE #( length = lv_length
+                      string = lv_string ) INTO TABLE  lt_longest_string.
+      IF lv_length EQ strlen( iv_string ).
+        rv_long_non_repeat = lv_string.
+        EXIT.
+      ENDIF.
+    ENDDO.
+    rv_long_non_repeat = lt_longest_string[ length = lt_longest_string[ lines( lt_longest_string ) ]-length ]-string.
+  ENDMETHOD.
+
+
+  METHOD possible_string.
+    IF iv_left = abap_true.
+      " Get the Left possible string
+      DO ( iv_index - 1 ) TIMES.
+        DATA(lv_offset) = iv_index - sy-index - 1.
+        IF lv_offset LT 0.
+          EXIT.
+        ENDIF.
+        DATA(lv_character) = iv_string_input+lv_offset(1).
+        IF cv_string CS lv_character.
+          EXIT.
+        ELSE.
+          cv_string = |{ lv_character && cv_string }|.
+        ENDIF.
+      ENDDO.
+    ELSE.
+      DATA(lv_times) = strlen( iv_string_input ) - iv_index.
+      DO lv_times TIMES.
+        lv_offset = iv_index + sy-index - 1.
+        IF lv_offset EQ strlen( iv_string_input ).
+          EXIT.
+        ENDIF.
+        lv_character = iv_string_input+lv_offset(1).
+        IF cv_string CS lv_character.
+          EXIT.
+        ELSE.
+          cv_string = |{ cv_string && lv_character }|.
+        ENDIF.
+      ENDDO.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD string_operation.
+    DATA: lv_string_input TYPE string.
+    lv_string_input = 'AEZWXKTSWH'.
+    DATA(lv_1st_non_rep_str) = non_repeating_char_string( lv_string_input ).
+  ENDMETHOD.
+
+
+  METHOD longest_possible_string.
+    "Checking for the last index
+    IF ( iv_position_start > iv_position_end ).
+      RETURN.
+    ENDIF.
+    " If reached final position
+    IF ( iv_position_start EQ iv_position_end ).
+      rv_length = 1.
+      RETURN.
+    ENDIF.
+
+    " If 1st character == last character.
+    DATA(lv_offset_left) = 0.
+    DATA(lv_offset_right) = strlen( iv_string ) - 1.
+    IF iv_string+lv_offset_left(1) EQ iv_string+lv_offset_right(1).
+      " Get the Inner String
+      lv_offset_left = lv_offset_left + 1.
+      DATA(lv_length) = lv_offset_right - lv_offset_left.
+      IF lv_length LE 0.
+        rv_length = 2.
+        RETURN.
+      ELSE.
+        DATA(lv_string_next) = iv_string+lv_offset_left(lv_length).
+        rv_length = 2 + longest_possible_string( iv_string = lv_string_next
+                                                 iv_position_start = ( iv_position_start + 1 )
+                                                 iv_position_end   = ( iv_position_end - 1 ) ).
+      ENDIF.
+      RETURN.
+    ELSE.
+      " If not Matched then we need to get the maximum of
+      lv_length = lv_offset_right - lv_offset_left.
+      DATA(lv_string_next_left) = iv_string+lv_offset_left(lv_length).
+      lv_offset_left = lv_offset_left + 1.
+      DATA(lv_string_next_right) = iv_string+lv_offset_left(lv_length).
+      rv_length = maximum( iv_num1 = longest_possible_string( iv_string = lv_string_next_left
+                                                              iv_position_start = iv_position_start
+                                                              iv_position_end = ( iv_position_end - 1 ) )
+                           iv_num2 = longest_possible_string( iv_string = lv_string_next_right
+                                                              iv_position_start = ( iv_position_start + 1 )
+                                                              iv_position_end = iv_position_end ) ).
+      RETURN.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD minimum_delete_for_palindrome.
+    DATA:lv_string TYPE string VALUE 'GEEKSFORGEEKS'.
+    DATA(lv_length) = longest_possible_string( iv_string = lv_string
+                                               iv_position_start = 1
+                                               iv_position_end   = strlen( lv_string ) ).
+    lv_length = strlen( lv_string ) - lv_length.
+  ENDMETHOD.
+ENDCLASS.
